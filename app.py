@@ -21,6 +21,7 @@ elif page == "Household Dashboard":
     })
     st.bar_chart(data.set_index('Category'))
     st.write("Track your recycling habits here!")
+)
 
 # Municipal Dashboard
 elif page == "Municipal Dashboard":
@@ -30,4 +31,19 @@ elif page == "Municipal Dashboard":
         'lat': [12.9716, 12.9721],
         'lon': [77.5946, 77.5952]
     }))
+import streamlit as st
+import pandas as pd
 
+# Title
+st.title("Smart Waste Management System")
+
+# Load the CSV file
+data = pd.read_csv("sample_data.csv")
+
+# Display the table
+st.subheader("Waste Data from CSV")
+st.write(data)
+
+# Create a bar chart
+st.subheader("Waste Segregation Chart")
+st.bar_chart(data.set_index("Category")
