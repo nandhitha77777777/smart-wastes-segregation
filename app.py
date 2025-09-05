@@ -1,3 +1,4 @@
+import streamlit as st
 import os
 from datetime import datetime
 import random
@@ -15,21 +16,17 @@ user_points = {}
 NOTIFY_THRESHOLD = 90  # percent
 
 # ==========================
-# Mock classifier function
+# Mock classifier
 # ==========================
 def classify_waste(image_path):
-    """
-    Mock classifier: randomly assigns category.
-    Replace with ML model logic if available.
-    """
+    """Randomly assign a category (replace with AI model later)."""
     return random.choice(list(bins.keys()))
 
 # ==========================
-# Notification function
+# Notification
 # ==========================
 def notify_municipal(bin_type):
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] "
-          f"ALERT: {bin_type.capitalize()} bin is 90% full! Municipal team notified!\n")
+    st.warning(f"{bin_type.capitalize()} bin is 90% full! Municipal team notified!")
 
 # ==========================
 # Add waste to bin
@@ -45,41 +42,36 @@ def add_waste(user_id, category, amount=10):
     return fill_percent, user_points[user_id]
 
 # ==========================
-# Show current bin status
+# Streamlit App
 # ==========================
-def show_bins():
-    print("\n--- Current Bin Status ---")
-    for name, info in bins.items():
-        bar_length = 30  # ASCII progress bar length
-        filled_length = int(bar_length * info['fill'] / info['capacity'])
-                            bar = '█' * filled_length + '-' * (bar_length - filled_length)
-        print(f"{name.capitalize():12}: |{bar}| {info['fill']}/{info['capacity']} ({(info['fill']/info['capacity']*100):.1f}%)")
-    print("---------------------------\n")
+st.title("Smart Waste Segregation System")
+st.write("Categories: Hazardous, Recyclable, Organic")
 
-# ==========================
-# Main Program Loop
-# ==========================
-def main():
-    print("Welcome to the Smart Waste Segregation System (Terminal Version)")
-    print("Categories: Hazardous, Recyclable, Organic\n")
-    while True:
-        user_id = input("Enter your User ID (or 'exit' to quit): ")
-        if user_id.lower() == "exit":
-            break
+# User ID input
+user_id = st.text_input("Enter your User ID:")
 
-        image_path = input("Enter image file path: ")
-        if not os.path.exists(image_path):
-            print("File not found. Please try again.\n")
-            continue
+# File uploader
+uploaded_file = st.file_uploader("Upload an image of the waste:", type=["jpg", "png", "jpeg"])
 
-        # Classify the waste
-        category = classify_waste(image_path)
-        fill_percent, points = add_waste(user_id, category)
+if uploaded_file and user_id:
+    # Save the uploaded image temporarily
+    os.makedirs("uploads", exist_ok=True)
+    filename = f"uploads/{datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_file.name}"
+    with open(filename, "wb") as f:
+        f.write(uploaded_file.getbuffer())
 
-        print(f"\nWaste classified as: {category.capitalize()}")
-        print(f"Bin fill: {fill_percent:.1f}%")
-        print(f"{user_id}'s points: {points}")
-        show_bins()
-if __name__ == "__main__":
-    main()
+    # Classify waste
+    category = classify_waste(filename)
+    fill_percent, points = add_waste(user_id, category)
+
+    st.success(f"Waste classified as: **{category.capitalize()}**")
+    st.info(f"Bin fill: {fill_percent:.1f}%")
+    st.info(f"{user_id}'s points: {points}")
+
+# Display all bins with progress bars
+st.subheader("Bin Status")
+for name, info in bins.items():
+    st.write(f"{name.capitalize()} ({info['fill']}/{info['capacity']})")
+    st.progress(min(info['fill']/info['capacity'],1.0))
+
 
