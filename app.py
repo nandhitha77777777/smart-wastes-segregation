@@ -1,73 +1,76 @@
-import streamlit as st
-import pandas as pd
+from flask import Flask, request, jsonify, render_template
+import cv2
+import numpy as np
+import os
+from datetime import datetime
 
-# Title
-st.title("♻️ Smart Waste Segregation & Recycling System")
+app = Flask(__name__)
 
-# --- Default Waste Data ---
-default_data = pd.DataFrame({
-    "Category": ["Organic", "Recyclable", "Hazardous"],
-    "Amount": [50, 30, 20]
-})
+# Mock database for bin status and user points
+bin_status = {
+    "hazardous": 0,
+    "recyclable": 0,
+    "organic": 0
+}
 
-# --- Sidebar Menu ---
-menu = ["Home", "Manual Data Entry", "Municipal Dashboard", "Help"]
-choice = st.sidebar.selectbox("Select an option", menu)
+user_points = {}
 
-# --- Home Page ---
-if choice == "Home":
-    st.header("🏠 Waste Data Overview")
+# Threshold for bin notification
+BIN_CAPACITY = 100  # assume 100 units max capacity
+NOTIFY_THRESHOLD = 90  # percent
 
-    st.subheader("Current Waste Data")
-    st.write(default_data)
+# Mock AI classification function (replace with your actual ML model)
+def classify_waste(image_path):
+    """
+    Returns one of: 'hazardous', 'recyclable', 'organic'
+    For demo purposes, it randomly chooses.
+    """
+    import random
+    return random.choice(['hazardous', 'recyclable', 'organic'])
 
-    st.subheader("Waste Segregation Chart")
-    st.bar_chart(default_data.set_index("Category"))
+# Mock notification function
+def notify_municipal(bin_type):
+    print(f"[{datetime.now()}] Notification: {bin_type} bin is 90% full. Municipal team will collect.")
 
-# --- Manual Data Entry Page ---
-elif choice == "Manual Data Entry":
-    st.header("✏️ Enter Waste Data Manually")
+@app.route('/')
+def index():
+    return render_template('index.html')  # a simple HTML form to upload image
 
-    st.write("Update the values below to simulate new waste collection data:")
+@app.route('/upload', methods=['POST'])
+def upload_waste():
+    if 'waste_image' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    
+    file = request.files['waste_image']
+    user_id = request.form.get('user_id', 'anonymous')
+    
+    # Save image
+    filename = f"uploads/{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
+    os.makedirs("uploads", exist_ok=True)
+    file.save(filename)
+    
+    # Classify waste
+    category = classify_waste(filename)
+    
+    # Update bin status
+    bin_status[category] += 10  # assume each waste increases bin by 10 units for demo
+    
+    # Update user points
+    user_points[user_id] = user_points.get(user_id, 0) + 10  # 10 points per deposit
+    
+    # Check if bin is near full
+    fill_percent = (bin_status[category] / BIN_CAPACITY) * 100
+    if fill_percent >= NOTIFY_THRESHOLD:
+        notify_municipal(category)
+    
+    return jsonify({
+        "category": category,
+        "bin_fill_percent": fill_percent,
+        "user_points": user_points[user_id]
+    })
 
-    organic = st.number_input("Organic Waste", min_value=0, value=50)
-    recyclable = st.number_input("Recyclable Waste", min_value=0, value=30)
-    hazardous = st.number_input("Hazardous Waste", min_value=0, value=20)
+if __name__ == '__main__':
+    app.run(debug=True)
 
-    if st.button("Update Data"):
-        updated_data = pd.DataFrame({
-            "Category": ["Organic", "Recyclable", "Hazardous"],
-            "Amount": [organic, recyclable, hazardous]
-        })
-        st.success("Data updated successfully!")
-        st.write(updated_data)
-        st.bar_chart(updated_data.set_index("Category"))
-
-# --- Municipal Dashboard ---
-elif choice == "Municipal Dashboard":
-    st.header("🏙 Municipal Waste Dashboard")
-    st.write("This map shows simulated waste collection points in the city.")
-
-    st.map(pd.DataFrame({
-        'lat': [12.9716, 12.9720, 12.9750],
-        'lon': [77.5946, 77.6000, 77.5980],
-    }))
-
-    st.write("Green dots represent waste collection locations.")
-
-# --- Help Page ---
-elif choice == "Help":
-    st.header("ℹ️ Help & Instructions")
-    st.markdown("""
-    ### How to Use This App:
-    1. Go to **Home** to view default waste data.
-    2. Use **Manual Data Entry** to input waste data without a CSV.
-    3. Go to **Municipal Dashboard** to view collection points on a map.
-    4. No need to upload or download files — everything works instantly!
-    """)
-
-# --- Footer ---
-st.sidebar.markdown("---")
-st.sidebar.info("Smart Waste System Prototype | Built with Streamlit")
 
 
