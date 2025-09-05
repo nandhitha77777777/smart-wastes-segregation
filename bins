@@ -1,0 +1,54 @@
+from datetime import datetime
+
+BIN_CAPACITY = 100
+NOTIFY_THRESHOLD = 90
+bin_fill = 0
+
+def add_waste(user_points, user_id, amount=10):
+    global bin_fill
+    bin_fill += amount
+    user_points[user_id] = user_points.get(user_id, 0) + 10  # 10 points per deposit
+    
+    fill_percent = (bin_fill / BIN_CAPACITY) * 100
+    if fill_percent >= NOTIFY_THRESHOLD:
+        notify_municipal()
+    return fill_percent, user_points[user_id]
+
+def notify_municipal():
+    print(f"[{datetime.now()}] Hazardous bin is 90% full. Municipal team notified!")
+from datetime import datetime
+
+BIN_CAPACITY = 100
+NOTIFY_THRESHOLD = 90
+bin_fill = 0
+
+def add_waste(user_points, user_id, amount=10):
+    global bin_fill
+    bin_fill += amount
+    user_points[user_id] = user_points.get(user_id, 0) + 5  # Recyclable gives 5 points
+    
+    fill_percent = (bin_fill / BIN_CAPACITY) * 100
+    if fill_percent >= NOTIFY_THRESHOLD:
+        notify_municipal()
+    return fill_percent, user_points[user_id]
+
+def notify_municipal():
+    print(f"[{datetime.now()}] Recyclable bin is 90% full. Municipal team notified!")
+from datetime import datetime
+
+BIN_CAPACITY = 100
+NOTIFY_THRESHOLD = 90
+bin_fill = 0
+
+def add_waste(user_points, user_id, amount=10):
+    global bin_fill
+    bin_fill += amount
+    user_points[user_id] = user_points.get(user_id, 0) + 3  # Organic gives 3 points
+    
+    fill_percent = (bin_fill / BIN_CAPACITY) * 100
+    if fill_percent >= NOTIFY_THRESHOLD:
+        notify_municipal()
+    return fill_percent, user_points[user_id]
+
+def notify_municipal():
+    print(f"[{datetime.now()}] Organic bin is 90% full. Municipal team notified!")
