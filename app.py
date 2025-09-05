@@ -46,4 +46,4 @@ st.write(data)
 
 # Create a bar chart
 st.subheader("Waste Segregation Chart")
-st.bar_chart(data.set_index("Category")
+st.bar_chart(data.set_index("Category"))
